@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html>
+  
+<head>
+    <title>Read Text File</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/jszip.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.js"></script>
+    <script src="http://cdn.jsdelivr.net/g/filesaver.js"></script>
+    <script>
+    var dict;
+    //Converting Excel file into JSON object
+    var ExcelToJSON = function() {
+
+        this.parseExcel = function(file) {
+          var reader = new FileReader();
+    
+          reader.onload = function(e) {
+            var data = e.target.result;
+            var workbook = XLSX.read(data, {
+              type: 'binary'
+            });
+            workbook.SheetNames.forEach(function(sheetName) {
+              // Here is your object
+              var XL_row_object = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
+              var json_object = JSON.stringify(XL_row_object);
+            //   console.log(JSON.parse(json_object));
+              var dic=JSON.parse(json_object);
+              console.log(dic[1].English + "  "+dic[1].French);
+              dict=dic;
+              
+              
+            //   jQuery( '#xlx_json' ).val( json_object );
+            })
+          };
+    
+          reader.onerror = function(ex) {
+            console.log(ex);
+          };
+    
+          reader.readAsBinaryString(file);
+        };
+        
+    };
+    
+    function handleFileSelect(evt) {
+      
+      var files = evt.target.files; // FileList object
+      var xl2json = new ExcelToJSON();
+      xl2json.parseExcel(files[0]);
+    }
+    
+</script>
+
+
+</head>
+  
+<body>
+
+    <form enctype="multipart/form-data">
+       <h5>Please upload the Dictionary file</h5></p> <input id="upload" type=file  name="files[]">
+      </form>
+      <br/>
+      <br/>
+    
+
+    <h5>Please select the file to translate</h5><input type="file" name="inputfile"
+            id="inputfile">
+    <br>
+   
+    <p id="output"></p>
+      
+    <script type="text/javascript">
+      //Translating the input file with the help of French Dictionary
+        document.getElementById('inputfile')
+            .addEventListener('change', function() {
+              
+            var fr=new FileReader();
+            var frequency=[];
+            var data={};
+            
+            fr.onload=function(){
+                
+                var con=fr.result;
+                console.log(dict);
+                var frequency=[];
+                var data={};
+                
+                
+                for(j=0;j<dict.length;j++){
+                var count=0;
+                var re = new RegExp("\\b^"+dict[j].English+"$\\b").test(con);
+
+        
+                var re1=new RegExp("\\b^"+dict[j].English.charAt(0).toUpperCase() + dict[j].English.substr(1).toLowerCase());
+    
+
+            
+                while(con.match(re) ||con.match(re1)){
+                    if(dict[j].English==dict[j].French)
+                      break;
+                    if(dict[j].English==dict[j].French.match(dict[j].English))
+                      break;
+                    if(dict[j].English!=con.match(dict[j].English))
+                      break;
+                    count++;
+                    if(con.match(re1))
+                      var r=con.replace(dict[j].English.charAt(0).toUpperCase() + dict[j].English.substr(1).toLowerCase(),dict[j].French.charAt(0).toUpperCase() + dict[j].French.substr(1).toLowerCase());
+                    else
+                      var r=con.replace(dict[j].English,dict[j].French);
+                    
+                    con=r;
+
+                    
+                }
+                data['English']=dict[j].English;
+                data['French']=dict[j].French;
+                data['Count']=count;
+                frequency.push(data);
+                document.getElementById('output').innerHTML+=data;
+                console.log(data);
+                
+
+                
+            }
+            console.log(r);
+            var blob = new Blob([r], { type: "text/plain;charset=utf-8" });
+            var blob1=new Blob([frequency],{ type: "text/plain;charset=utf-8" });
+            saveAs(blob, "t8.shakespeare.translated.txt");
+            saveAs(blob1,"frequency.txt");
+                
+                
+                
+                
+            }
+              
+            fr.readAsText(this.files[0]);
+            
+
+        })
+    </script>
+    <script>
+        document.getElementById('upload').addEventListener('change', handleFileSelect, false);
+  
+    </script>
+ </body>
+  
+</html>
